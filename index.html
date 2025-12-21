@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="utf-8">
-  <title>Hair Color Analyzer</title>
+  <title>DyeSmart – Haarfarben-Analyse für Friseure</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
@@ -76,21 +76,13 @@
     .error {
       color: #b00020;
     }
-
-    input[type="text"] {
-      width: 100%;
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #ddd;
-      margin-top: 12px;
-    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>Haarfarben-Analyse</h1>
-  <p>Foto hochladen → Analyse starten → Ergebnis erhalten.</p>
+  <h1>DyeSmart</h1>
+  <p>Professionelle Haarfarben-Analyse für Friseure.</p>
 
   <div class="upload" id="uploadBox">
     <strong>Klicken oder Foto hier ablegen</strong>
@@ -98,11 +90,6 @@
   </div>
 
   <img id="preview" alt="Vorschau">
-
-  <input
-    type="text"
-    id="apiUrl"
-    placeholder="Backend-URL z. B. https://dein-backend.onrender.com/analyze">
 
   <button id="analyzeBtn" disabled>Analysieren</button>
 
@@ -112,13 +99,14 @@
 </div>
 
 <script>
+  const BACKEND_URL = "https://dyesmart.onrender.com/analyze";
+
   const uploadBox = document.getElementById('uploadBox');
   const fileInput = document.getElementById('fileInput');
   const preview = document.getElementById('preview');
   const analyzeBtn = document.getElementById('analyzeBtn');
   const statusEl = document.getElementById('status');
   const resultEl = document.getElementById('result');
-  const apiUrlInput = document.getElementById('apiUrl');
 
   let file = null;
 
@@ -141,13 +129,6 @@
   analyzeBtn.onclick = async () => {
     if (!file) return;
 
-    const apiUrl = apiUrlInput.value.trim();
-    if (!apiUrl) {
-      statusEl.textContent = 'Bitte Backend-URL eingeben.';
-      statusEl.className = 'status error';
-      return;
-    }
-
     analyzeBtn.disabled = true;
     statusEl.textContent = 'Analyse läuft…';
     statusEl.className = 'status';
@@ -156,7 +137,7 @@
     formData.append('file', file);
 
     try {
-      const response = await fetch(apiUrl, {
+      const response = await fetch(BACKEND_URL, {
         method: 'POST',
         body: formData
       });
