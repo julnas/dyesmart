@@ -1,9 +1,9 @@
-# color_segmentation.py
+# backend/color_segmentation.py
 import numpy as np
 import colorsys
-from typing import Dict, Tuple, List
+from typing import Dict, List
 from PIL import Image
-import os
+import io
 
 
 class HairColorSegmenter:
@@ -18,7 +18,7 @@ class HairColorSegmenter:
             7: {"name": "Mittelblond", "min_brightness": 100, "max_brightness": 130},
             8: {"name": "Hellblond", "min_brightness": 130, "max_brightness": 160},
             9: {"name": "Sehr hellblond", "min_brightness": 160, "max_brightness": 190},
-            10: {"name": "Platinblond", "min_brightness": 190, "max_brightness": 255}
+            10: {"name": "Platinblond", "min_brightness": 190, "max_brightness": 255},
         }
 
         self.nuance_levels = {
@@ -28,7 +28,7 @@ class HairColorSegmenter:
             0.4: "Kupfer",
             0.6: "Rot",
             0.7: "Violett",
-            0.8: "Blau"
+            0.8: "Blau",
         }
 
     def rgb_to_hsv(self, rgb):
@@ -39,7 +39,7 @@ class HairColorSegmenter:
     def brightness(self, rgb):
         return 0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]
 
-    def classify(self, rgb):
+    def classify(self, rgb: List[int]) -> Dict:
         h, s, v = self.rgb_to_hsv(rgb)
         bright = self.brightness(rgb)
 
@@ -69,24 +69,30 @@ class HairColorSegmenter:
         return {
             "source_depth": depth,
             "source_nuance": nuance,
-            "avg_color": rgb,
-            "info": f"{depth_name}, Nuance {self.nuance_levels.get(nuance, 'Neutral')}"
+            "avg_color": [int(rgb[0]), int(rgb[1]), int(rgb[2])],
+            "depth_name": depth_name,
+            "nuance_name": self.nuance_levels.get(nuance, "Neutral"),
+            "info": f"{depth_name}, Nuance {self.nuance_levels.get(nuance, 'Neutral')}",
         }
 
 
-def analyze_image_average_rgb(path: str):
-    img = Image.open(path).convert("RGB")
+_segmenter = HairColorSegmenter()
+
+
+def analyze_image_average_rgb_from_pil(img: Image.Image) -> List[int]:
+    img = img.convert("RGB")
     w, h = img.size
-    img = img.crop((0, 0, w, h // 2))
+    img = img.crop((0, 0, w, h // 2))  # obere Hälfte
     arr = np.array(img)
     avg = arr.mean(axis=(0, 1))
     return [int(avg[0]), int(avg[1]), int(avg[2])]
 
 
-def analyze_hair_color_from_image(path: str):
-    if not os.path.exists(path):
-        return {"error": "Bild nicht gefunden"}
+def analyze_hair_color_from_bytes(image_bytes: bytes) -> Dict:
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+    except Exception:
+        return {"error": "Bild konnte nicht gelesen werden"}
 
-    rgb = analyze_image_average_rgb(path)
-    segmenter = HairColorSegmenter()
-    return segmenter.classify(rgb)
+    rgb = analyze_image_average_rgb_from_pil(img)
+    return _segmenter.classify(rgb)
