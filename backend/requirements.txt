@@ -4,7 +4,5 @@ numpy==1.26.4
 opencv-python-headless==4.10.0.84
 python-multipart==0.0.9
 kivy==2.0.0
-numpy==1.21.0
-opencv-python==4.5.3.56
 scikit-learn==0.24.2
 matplotlib==3.4.2
