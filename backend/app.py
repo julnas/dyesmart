@@ -9,13 +9,13 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://dyesmart.netlify.app",
-        # fürs lokale Testen:
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:3000",
     ],
-    allow_credentials=False,  # auf True nur wenn du Cookies/Sessions nutzt
+    allow_origin_regex=r"https://.*--dyesmart\.netlify\.app",
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
