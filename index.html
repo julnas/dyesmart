@@ -74,6 +74,7 @@
             border-left: 5px solid #4a90e2;
             padding: 15px;
             border-radius: 8px;
+            min-height: 120px;
         }
 
         .color-sample {
@@ -86,14 +87,10 @@
             margin-right: 8px;
         }
 
-        .description {
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 0.9rem;
+        .error {
+            color: #b00020;
+            font-weight: bold;
         }
-
-        h2 { color: #4a90e2; }
 
         footer {
             text-align: center;
@@ -114,10 +111,8 @@
 
     <section>
         <h2>Beschreibung</h2>
-        <div class="description">
-            <p><strong>Farbtiefen:</strong> 1 = Schwarz … 10 = Platinblond</p>
-            <p><strong>Nuancen:</strong> 0.0 = Neutral, 0.1 = Asch, 0.3 = Gold, 0.4 = Kupfer, 0.6 = Rot, 0.7 = Violett, 0.8 = Blau</p>
-        </div>
+        <p><strong>Farbtiefen:</strong> 1 = Schwarz … 10 = Platinblond</p>
+        <p><strong>Nuancen:</strong> 0.0 = Neutral, 0.1 = Asch, 0.3 = Gold, 0.4 = Kupfer, 0.6 = Rot, 0.7 = Violett, 0.8 = Blau</p>
     </section>
 
     <section>
@@ -157,7 +152,9 @@
 
     <section>
         <h2>Ergebnis</h2>
-        <div class="result-box">Noch kein Ergebnis</div>
+        <div class="result-box" id="resultBox">
+            Noch kein Ergebnis
+        </div>
     </section>
 
 </main>
@@ -167,47 +164,80 @@
 </footer>
 
 <script>
-/* 🔴 HIER DEINE RENDER-URL EINTRAGEN */
+/* 🔴 WICHTIG: HIER DEINE RENDER-URL EINTRAGEN */
 const API_BASE = "https://DEIN-RENDER-SERVICE.onrender.com";
 
 const sections = document.querySelectorAll("section");
 const manualInputs = sections[1].querySelectorAll("input");
 const imageInputs  = sections[2].querySelectorAll("input");
-const resultBox = document.querySelector(".result-box");
+const resultBox = document.getElementById("resultBox");
 
 async function postForm(path, formData) {
-    const res = await fetch(API_BASE + path, { method: "POST", body: formData });
-    const json = await res.json();
-    if (!json.ok) throw new Error(json.error?.message || "Fehler");
+    let res;
+    try {
+        res = await fetch(API_BASE + path, {
+            method: "POST",
+            body: formData
+        });
+    } catch {
+        throw new Error("Netzwerkfehler: Backend nicht erreichbar oder CORS blockiert.");
+    }
+
+    const text = await res.text();
+    let json = null;
+    try { json = JSON.parse(text); } catch {}
+
+    if (!res.ok) {
+        throw new Error(json?.error?.message || text || `HTTP ${res.status}`);
+    }
+    if (json?.ok === false) {
+        throw new Error(json?.error?.message || "Unbekannter Fehler");
+    }
+
     return json.data;
 }
 
-function render(data) {
+function renderResult({
+    rgb,
+    detectedDepth,
+    detectedNuance,
+    targetDepth,
+    targetNuance,
+    oxidant,
+    recipe
+}) {
+    const bg = rgb ? `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` : "#ccc";
+
     resultBox.innerHTML = `
         <div>
-            <span class="color-sample" style="background: rgb(${data.rgb || "200,200,200"})"></span>
+            <span class="color-sample" style="background:${bg}"></span>
             Ergebnis
         </div>
-        <p><strong>Erkannte Tiefe:</strong> ${data.detectedDepth}</p>
-        <p><strong>Erkannte Nuance:</strong> ${data.detectedNuance}</p>
-        <p><strong>Ziel Tiefe:</strong> ${data.targetDepth}</p>
-        <p><strong>Ziel Nuance:</strong> ${data.targetNuance}</p>
-        <p><strong>Oxidant:</strong> ${data.oxidant}</p>
-        <pre>${data.recipe}</pre>
+        <p><strong>Erkannte Tiefe:</strong> ${detectedDepth}</p>
+        <p><strong>Erkannte Nuance:</strong> ${detectedNuance}</p>
+        <p><strong>Ziel Tiefe:</strong> ${targetDepth}</p>
+        <p><strong>Ziel Nuance:</strong> ${targetNuance}</p>
+        <p><strong>Oxidant:</strong> ${oxidant}</p>
+        <pre>${recipe}</pre>
     `;
+}
+
+function renderError(message) {
+    resultBox.innerHTML = `<div class="error">Fehler:</div><p>${message}</p>`;
 }
 
 /* Manuell */
 document.querySelector(".manual-btn").onclick = async () => {
-    const fd = new FormData();
-    fd.append("source_depth", manualInputs[0].value);
-    fd.append("source_nuance", manualInputs[1].value);
-    fd.append("target_depth", manualInputs[2].value);
-    fd.append("target_nuance", manualInputs[3].value);
-
     try {
+        const fd = new FormData();
+        fd.append("source_depth", manualInputs[0].value);
+        fd.append("source_nuance", manualInputs[1].value);
+        fd.append("target_depth", manualInputs[2].value);
+        fd.append("target_nuance", manualInputs[3].value);
+
         const data = await postForm("/recipe", fd);
-        render({
+
+        renderResult({
             detectedDepth: manualInputs[0].value,
             detectedNuance: manualInputs[1].value,
             targetDepth: manualInputs[2].value,
@@ -216,16 +246,19 @@ document.querySelector(".manual-btn").onclick = async () => {
             recipe: data.recipe
         });
     } catch (e) {
-        resultBox.innerText = e.message;
+        renderError(e.message);
     }
 };
 
 /* Bild */
 document.querySelector(".image-btn").onclick = async () => {
-    const fd = new FormData();
-    fd.append("file", imageInputs[0].files[0]);
-
     try {
+        const file = imageInputs[0].files[0];
+        if (!file) throw new Error("Bitte zuerst ein Bild auswählen.");
+
+        const fd = new FormData();
+        fd.append("file", file);
+
         const analysis = await postForm("/analyze", fd);
 
         const fd2 = new FormData();
@@ -236,7 +269,7 @@ document.querySelector(".image-btn").onclick = async () => {
 
         const recipe = await postForm("/recipe", fd2);
 
-        render({
+        renderResult({
             rgb: analysis.avgColor,
             detectedDepth: analysis.depth,
             detectedNuance: analysis.nuance,
@@ -246,7 +279,7 @@ document.querySelector(".image-btn").onclick = async () => {
             recipe: recipe.recipe
         });
     } catch (e) {
-        resultBox.innerText = e.message;
+        renderError(e.message);
     }
 };
 </script>
