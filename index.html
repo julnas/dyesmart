@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DyeSmart Haarfarben Analyse</title>
 
-    <!-- Optional: externe CSS-Datei -->
     <link rel="stylesheet" href="style.css">
 
     <style>
@@ -56,7 +55,6 @@
             margin-bottom: 10px;
             border-radius: 6px;
             border: 1px solid #ccc;
-            box-sizing: border-box;
         }
 
         button {
@@ -66,30 +64,16 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 1rem;
-            transition: all 0.3s ease;
         }
 
-        button:hover {
-            opacity: 0.9;
-        }
-
-        .manual-btn {
-            background: #4a90e2;
-            color: white;
-            margin-right: 10px;
-        }
-
-        .image-btn {
-            background: #50e3c2;
-            color: white;
-        }
+        .manual-btn { background: #4a90e2; color: white; }
+        .image-btn  { background: #50e3c2; color: white; }
 
         .result-box {
             background: #eef4ff;
             border-left: 5px solid #4a90e2;
             padding: 15px;
             border-radius: 8px;
-            margin-top: 20px;
         }
 
         .color-sample {
@@ -109,27 +93,13 @@
             font-size: 0.9rem;
         }
 
-        h2 {
-            margin-top: 0;
-            color: #4a90e2;
-        }
+        h2 { color: #4a90e2; }
 
         footer {
             text-align: center;
             padding: 20px;
             font-size: 0.9rem;
             color: #666;
-            margin-top: 40px;
-        }
-
-        footer a {
-            color: #4a90e2;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
         }
     </style>
 </head>
@@ -147,21 +117,20 @@
         <div class="description">
             <p><strong>Farbtiefen:</strong> 1 = Schwarz … 10 = Platinblond</p>
             <p><strong>Nuancen:</strong> 0.0 = Neutral, 0.1 = Asch, 0.3 = Gold, 0.4 = Kupfer, 0.6 = Rot, 0.7 = Violett, 0.8 = Blau</p>
-            <p>Für die Bildanalyse: Haarsträhnen auf ein weißes Kopierpapier legen. Alles, was nicht weiß ist, wird analysiert.</p>
         </div>
     </section>
 
     <section>
         <h2>Manuelle Eingabe</h2>
         <form>
-            <label>Aktuelle Haarfarbe – Tiefe (1–10)</label>
-            <input type="number" value="5" min="1" max="10">
+            <label>Aktuelle Tiefe</label>
+            <input type="number" value="5">
 
             <label>Aktuelle Nuance</label>
             <input type="text" value="0.3">
 
-            <label>Ziel Haarfarbe – Tiefe (1–10)</label>
-            <input type="number" value="7" min="1" max="10">
+            <label>Ziel Tiefe</label>
+            <input type="number" value="7">
 
             <label>Ziel Nuance</label>
             <input type="text" value="0.1">
@@ -176,8 +145,8 @@
             <label>Bild hochladen</label>
             <input type="file" accept="image/*">
 
-            <label>Ziel Haarfarbe – Tiefe (1–10)</label>
-            <input type="number" value="7" min="1" max="10">
+            <label>Ziel Tiefe</label>
+            <input type="number" value="7">
 
             <label>Ziel Nuance</label>
             <input type="text" value="0.1">
@@ -188,18 +157,7 @@
 
     <section>
         <h2>Ergebnis</h2>
-        <div class="result-box">
-            <div>
-                <span class="color-sample" style="background: rgb(200,150,100);"></span>
-                Erkannte Farbe
-            </div>
-            <p><strong>Erkannte Tiefe:</strong> 5</p>
-            <p><strong>Erkannte Nuance:</strong> 0.3</p>
-            <p><strong>Ziel Tiefe:</strong> 7</p>
-            <p><strong>Ziel Nuance:</strong> 0.1</p>
-            <p><strong>Oxidant:</strong> 6%</p>
-            <pre>Beispielrezept</pre>
-        </div>
+        <div class="result-box">Noch kein Ergebnis</div>
     </section>
 
 </main>
@@ -207,6 +165,91 @@
 <footer>
     <a href="/impressum.html">Impressum</a>
 </footer>
+
+<script>
+/* 🔴 HIER DEINE RENDER-URL EINTRAGEN */
+const API_BASE = "https://DEIN-RENDER-SERVICE.onrender.com";
+
+const sections = document.querySelectorAll("section");
+const manualInputs = sections[1].querySelectorAll("input");
+const imageInputs  = sections[2].querySelectorAll("input");
+const resultBox = document.querySelector(".result-box");
+
+async function postForm(path, formData) {
+    const res = await fetch(API_BASE + path, { method: "POST", body: formData });
+    const json = await res.json();
+    if (!json.ok) throw new Error(json.error?.message || "Fehler");
+    return json.data;
+}
+
+function render(data) {
+    resultBox.innerHTML = `
+        <div>
+            <span class="color-sample" style="background: rgb(${data.rgb || "200,200,200"})"></span>
+            Ergebnis
+        </div>
+        <p><strong>Erkannte Tiefe:</strong> ${data.detectedDepth}</p>
+        <p><strong>Erkannte Nuance:</strong> ${data.detectedNuance}</p>
+        <p><strong>Ziel Tiefe:</strong> ${data.targetDepth}</p>
+        <p><strong>Ziel Nuance:</strong> ${data.targetNuance}</p>
+        <p><strong>Oxidant:</strong> ${data.oxidant}</p>
+        <pre>${data.recipe}</pre>
+    `;
+}
+
+/* Manuell */
+document.querySelector(".manual-btn").onclick = async () => {
+    const fd = new FormData();
+    fd.append("source_depth", manualInputs[0].value);
+    fd.append("source_nuance", manualInputs[1].value);
+    fd.append("target_depth", manualInputs[2].value);
+    fd.append("target_nuance", manualInputs[3].value);
+
+    try {
+        const data = await postForm("/recipe", fd);
+        render({
+            detectedDepth: manualInputs[0].value,
+            detectedNuance: manualInputs[1].value,
+            targetDepth: manualInputs[2].value,
+            targetNuance: manualInputs[3].value,
+            oxidant: data.oxidant,
+            recipe: data.recipe
+        });
+    } catch (e) {
+        resultBox.innerText = e.message;
+    }
+};
+
+/* Bild */
+document.querySelector(".image-btn").onclick = async () => {
+    const fd = new FormData();
+    fd.append("file", imageInputs[0].files[0]);
+
+    try {
+        const analysis = await postForm("/analyze", fd);
+
+        const fd2 = new FormData();
+        fd2.append("source_depth", analysis.depth);
+        fd2.append("source_nuance", analysis.nuance);
+        fd2.append("target_depth", imageInputs[1].value);
+        fd2.append("target_nuance", imageInputs[2].value);
+
+        const recipe = await postForm("/recipe", fd2);
+
+        render({
+            rgb: analysis.avgColor,
+            detectedDepth: analysis.depth,
+            detectedNuance: analysis.nuance,
+            targetDepth: imageInputs[1].value,
+            targetNuance: imageInputs[2].value,
+            oxidant: recipe.oxidant,
+            recipe: recipe.recipe
+        });
+    } catch (e) {
+        resultBox.innerText = e.message;
+    }
+};
+</script>
 
 </body>
 </html>
