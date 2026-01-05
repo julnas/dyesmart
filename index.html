@@ -7,6 +7,13 @@
 
     <link rel="stylesheet" href="style.css">
 
+    <!-- Umami Analytics -->
+    <script
+        defer
+        src="https://cloud.umami.is/script.js"
+        data-website-id="fbe0696e-e5c1-4ac0-8296-fc6f2e155dea">
+    </script>
+
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -64,7 +71,11 @@
             cursor: pointer;
             font-weight: bold;
             font-size: 1rem;
+            transition: opacity 0.2s;
         }
+
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .manual-btn { background: #4a90e2; color: white; }
         .image-btn  { background: #50e3c2; color: white; }
@@ -98,6 +109,8 @@
             font-size: 0.9rem;
             color: #666;
         }
+
+        pre { white-space: pre-wrap; }
     </style>
 </head>
 
@@ -164,7 +177,7 @@
 </footer>
 
 <script>
-/* 🔴 WICHTIG: HIER DEINE RENDER-URL EINTRAGEN */
+/* 🔧 Render Backend */
 const API_BASE = "https://dyesmart.onrender.com";
 
 const sections = document.querySelectorAll("section");
@@ -175,39 +188,23 @@ const resultBox = document.getElementById("resultBox");
 async function postForm(path, formData) {
     let res;
     try {
-        res = await fetch(API_BASE + path, {
-            method: "POST",
-            body: formData
-        });
+        res = await fetch(API_BASE + path, { method: "POST", body: formData });
     } catch {
-        throw new Error("Netzwerkfehler: Backend nicht erreichbar oder CORS blockiert.");
+        throw new Error("Backend nicht erreichbar.");
     }
 
     const text = await res.text();
     let json = null;
     try { json = JSON.parse(text); } catch {}
 
-    if (!res.ok) {
-        throw new Error(json?.error?.message || text || `HTTP ${res.status}`);
+    if (!res.ok || json?.ok === false) {
+        throw new Error(json?.error?.message || text || "Fehler");
     }
-    if (json?.ok === false) {
-        throw new Error(json?.error?.message || "Unbekannter Fehler");
-    }
-
     return json.data;
 }
 
-function renderResult({
-    rgb,
-    detectedDepth,
-    detectedNuance,
-    targetDepth,
-    targetNuance,
-    oxidant,
-    recipe
-}) {
+function renderResult({ rgb, detectedDepth, detectedNuance, targetDepth, targetNuance, oxidant, recipe }) {
     const bg = rgb ? `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` : "#ccc";
-
     resultBox.innerHTML = `
         <div>
             <span class="color-sample" style="background:${bg}"></span>
@@ -222,8 +219,8 @@ function renderResult({
     `;
 }
 
-function renderError(message) {
-    resultBox.innerHTML = `<div class="error">Fehler:</div><p>${message}</p>`;
+function renderError(msg) {
+    resultBox.innerHTML = `<div class="error">Fehler:</div><p>${msg}</p>`;
 }
 
 /* Manuell */
