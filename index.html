@@ -1,162 +1,173 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <title>DyeSmart – Haarfarben-Analyse für Friseure</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DyeSmart Haarfarben Analyse</title>
+    <!-- Statischer CSS-Pfad -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
 
-  <style>
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 24px;
-    }
+        header {
+            background: #4a90e2;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
 
-    .container {
-      max-width: 900px;
-      margin: auto;
-      background: white;
-      padding: 24px;
-      border-radius: 14px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.08);
-    }
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
 
-    h1 { margin-top: 0; }
+        main {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
 
-    .upload {
-      border: 2px dashed #bbb;
-      border-radius: 12px;
-      padding: 24px;
-      text-align: center;
-      cursor: pointer;
-    }
+        section {
+            margin-bottom: 30px;
+        }
 
-    .upload:hover {
-      border-color: #333;
-    }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
 
-    img {
-      max-width: 100%;
-      margin-top: 16px;
-      border-radius: 12px;
-      border: 1px solid #eee;
-    }
+        input[type="number"], input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 8px 10px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
 
-    button {
-      margin-top: 16px;
-      padding: 12px 18px;
-      border-radius: 10px;
-      border: 1px solid #ccc;
-      background: #fff;
-      cursor: pointer;
-      font-size: 16px;
-    }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
 
-    button:disabled {
-      opacity: .5;
-      cursor: not-allowed;
-    }
+        button:hover {
+            opacity: 0.9;
+        }
 
-    .result {
-      margin-top: 24px;
-      background: #fafafa;
-      border: 1px solid #eee;
-      padding: 16px;
-      border-radius: 12px;
-      font-family: monospace;
-      white-space: pre-wrap;
-    }
+        .manual-btn { background: #4a90e2; color: white; margin-right: 10px; }
+        .image-btn { background: #50e3c2; color: white; }
 
-    .status {
-      margin-top: 12px;
-      color: #666;
-    }
+        .result-box {
+            background: #eef4ff;
+            border-left: 5px solid #4a90e2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
 
-    .error {
-      color: #b00020;
-    }
-  </style>
+        .color-sample {
+            display: inline-block;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        .description {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #4a90e2;
+        }
+    </style>
 </head>
 <body>
+    <header>
+        <h1>DyeSmart Haarfarben Analyse</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Beschreibung</h2>
+            <div class="description">
+                <p><strong>Farbtiefen:</strong> 1=Schwarz ... 10=Platinblond</p>
+                <p><strong>Nuancen:</strong> 0.0=Neutral, 0.1=Asch, 0.3=Gold, 0.4=Kupfer, 0.6=Rot, 0.7=Violett, 0.8=Blau</p>
+                <p>Für die Bildanalyse: Haarsträhnen auf ein weißes Kopierpapier legen. Alles was nicht weiß ist wird analysiert.</p>
+            </div>
+        </section>
 
-<div class="container">
-  <h1>DyeSmart</h1>
-  <p>Professionelle Haarfarben-Analyse für Friseure.</p>
+        <section>
+            <h2>Manuelle Eingabe</h2>
+            <form>
+                <label>Aktuelle Haarfarbe - Tiefe (1-10)</label>
+                <input type="number" value="5" min="1" max="10">
 
-  <div class="upload" id="uploadBox">
-    <strong>Klicken oder Foto hier ablegen</strong>
-    <input type="file" id="fileInput" accept="image/*" hidden>
-  </div>
+                <label>Aktuelle Nuance</label>
+                <input type="text" value="0.3">
 
-  <img id="preview" alt="Vorschau">
+                <label>Ziel Haarfarbe - Tiefe (1-10)</label>
+                <input type="number" value="7" min="1" max="10">
 
-  <button id="analyzeBtn" disabled>Analysieren</button>
+                <label>Ziel Nuance</label>
+                <input type="text" value="0.1">
 
-  <div class="status" id="status"></div>
+                <button type="button" class="manual-btn">Rezept Berechnen</button>
+            </form>
+        </section>
 
-  <div class="result" id="result">Noch keine Analyse.</div>
-</div>
+        <section>
+            <h2>Bildanalyse</h2>
+            <form>
+                <label>Bild hochladen</label>
+                <input type="file" accept="image/*">
 
-<script>
-  const BACKEND_URL = "https://dyesmart.onrender.com/analyze";
+                <label>Ziel Haarfarbe - Tiefe (1-10)</label>
+                <input type="number" value="7" min="1" max="10">
 
-  const uploadBox = document.getElementById('uploadBox');
-  const fileInput = document.getElementById('fileInput');
-  const preview = document.getElementById('preview');
-  const analyzeBtn = document.getElementById('analyzeBtn');
-  const statusEl = document.getElementById('status');
-  const resultEl = document.getElementById('result');
+                <label>Ziel Nuance</label>
+                <input type="text" value="0.1">
 
-  let file = null;
+                <button type="button" class="image-btn">Analyse Starten</button>
+            </form>
+        </section>
 
-  uploadBox.onclick = () => fileInput.click();
-
-  fileInput.onchange = () => {
-    file = fileInput.files[0];
-    if (!file || !file.type.startsWith('image/')) {
-      statusEl.textContent = 'Bitte ein Bild auswählen.';
-      statusEl.className = 'status error';
-      return;
-    }
-
-    preview.src = URL.createObjectURL(file);
-    analyzeBtn.disabled = false;
-    statusEl.textContent = '';
-    resultEl.textContent = 'Bereit für Analyse.';
-  };
-
-  analyzeBtn.onclick = async () => {
-    if (!file) return;
-
-    analyzeBtn.disabled = true;
-    statusEl.textContent = 'Analyse läuft…';
-    statusEl.className = 'status';
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const response = await fetch(BACKEND_URL, {
-        method: 'POST',
-        body: formData
-      });
-
-      if (!response.ok) {
-        throw new Error('Serverfehler');
-      }
-
-      const data = await response.json();
-      resultEl.textContent = JSON.stringify(data, null, 2);
-      statusEl.textContent = 'Fertig ✅';
-    } catch (err) {
-      statusEl.textContent = 'Fehler bei der Analyse.';
-      statusEl.className = 'status error';
-    } finally {
-      analyzeBtn.disabled = false;
-    }
-  };
-</script>
-
+        <!-- Statische Demo-Ergebnisse -->
+        <section>
+            <h2>Ergebnis</h2>
+            <div class="result-box">
+                <div>
+                    <span class="color-sample" style="background: rgb(200,150,100);"></span>
+                    Erkannte Farbe
+                </div>
+                <p><strong>Erkannte Tiefe:</strong> 5</p>
+                <p><strong>Erkannte Nuance:</strong> 0.3</p>
+                <p><strong>Ziel Tiefe:</strong> 7</p>
+                <p><strong>Ziel Nuance:</strong> 0.1</p>
+                <p><strong>Oxidant:</strong> 6%</p>
+                <pre>Beispielrezept</pre>
+            </div>
+        </section>
+    </main>
 </body>
 </html>
